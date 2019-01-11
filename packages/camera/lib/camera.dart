@@ -198,7 +198,7 @@ class CameraController extends ValueNotifier<CameraValue> {
 
   final CameraDescription description;
   final ResolutionPreset resolutionPreset;
-  final double videoEncodingBitrate; // in kbits
+  final int videoEncodingBitrate; // in kbits
 
   int _textureId;
   bool _isDisposed = false;

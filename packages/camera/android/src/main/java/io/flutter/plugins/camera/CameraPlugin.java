@@ -187,7 +187,7 @@ public class CameraPlugin implements MethodCallHandler {
         {
           String cameraName = call.argument("cameraName");
           String resolutionPreset = call.argument("resolutionPreset");
-          String videoEncodingBitrate = call.argument("videoEncodingBitrate");
+          int videoEncodingBitrate = Integer.parseInt(call.argument("videoEncodingBitrate"));
           if (camera != null) {
             camera.close();
           }
@@ -290,12 +290,12 @@ public class CameraPlugin implements MethodCallHandler {
     private Size videoSize;
     private MediaRecorder mediaRecorder;
     private boolean recordingVideo;
-    private double videoEncodingBitrate;
+    private int videoEncodingBitrate;
 
     Camera(final String cameraName, final String resolutionPreset, final int videoEncodingBitrate, @NonNull final Result result) {
 
       this.cameraName = cameraName;
-      this.videoEncodingBitrate = Double.parseDouble(videoEncodingBitrate);
+      this.videoEncodingBitrate = videoEncodingBitrate;
       textureEntry = view.createSurfaceTexture();
 
       registerEventChannel();
@@ -467,7 +467,7 @@ public class CameraPlugin implements MethodCallHandler {
       mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
       mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
       mediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
-      mediaRecorder.setVideoEncodingBitRate((int)(1024 * videoEncodingBitrate));
+      mediaRecorder.setVideoEncodingBitRate(1024 * videoEncodingBitrate);
       mediaRecorder.setAudioSamplingRate(16000);
       mediaRecorder.setVideoFrameRate(27);
       mediaRecorder.setVideoSize(videoSize.getWidth(), videoSize.getHeight());
