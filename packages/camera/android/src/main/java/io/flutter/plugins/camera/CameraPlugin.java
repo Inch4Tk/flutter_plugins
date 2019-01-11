@@ -187,7 +187,8 @@ public class CameraPlugin implements MethodCallHandler {
         {
           String cameraName = call.argument("cameraName");
           String resolutionPreset = call.argument("resolutionPreset");
-          int videoEncodingBitrate = Integer.parseInt(call.argument("videoEncodingBitrate"));
+          String videoEncodingBitrateStr = call.argument("videoEncodingBitrate");
+          int videoEncodingBitrate = Integer.parseInt(videoEncodingBitrateStr);
           if (camera != null) {
             camera.close();
           }
