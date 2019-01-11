@@ -191,7 +191,7 @@ public class CameraPlugin implements MethodCallHandler {
           if (camera != null) {
             camera.close();
           }
-          camera = new Camera(cameraName, resolutionPreset, result);
+          camera = new Camera(cameraName, resolutionPreset, videoEncodingBitrate, result);
           this.activity
               .getApplication()
               .registerActivityLifecycleCallbacks(this.activityLifecycleCallbacks);
