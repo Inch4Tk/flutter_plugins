@@ -193,11 +193,12 @@ class CameraValue {
 ///
 /// To show the camera preview on the screen use a [CameraPreview] widget.
 class CameraController extends ValueNotifier<CameraValue> {
-  CameraController(this.description, this.resolutionPreset)
+  CameraController(this.description, this.resolutionPreset, {this.videoEncodingBitrate = 1000})
       : super(const CameraValue.uninitialized());
 
   final CameraDescription description;
   final ResolutionPreset resolutionPreset;
+  final double videoEncodingBitrate; // in kbits
 
   int _textureId;
   bool _isDisposed = false;
@@ -219,6 +220,7 @@ class CameraController extends ValueNotifier<CameraValue> {
         <String, dynamic>{
           'cameraName': description.name,
           'resolutionPreset': serializeResolutionPreset(resolutionPreset),
+          'videoEncodingBitrate': videoEncodingBitrate.toString(),
         },
       );
       _textureId = reply['textureId'];
