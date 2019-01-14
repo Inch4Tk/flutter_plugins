@@ -44,6 +44,15 @@ CameraLensDirection _parseCameraLensDirection(String string) {
   throw ArgumentError('Unknown CameraLensDirection value');
 }
 
+List<CameraScreenSize> _parseScreenSizeList(
+    List widths, List heights) {
+  final List<CameraScreenSize> css = <CameraScreenSize>[];
+  for (int i = 0; i < widths.length; ++i) {
+    css.add(CameraScreenSize(widths[i], heights[i]));
+  }
+  return css;
+}
+
 /// Completes with a list of available cameras.
 ///
 /// May throw a [CameraException].
@@ -53,20 +62,36 @@ Future<List<CameraDescription>> availableCameras() async {
         await _channel.invokeMethod('availableCameras');
     return cameras.map((dynamic camera) {
       return CameraDescription(
-        name: camera['name'],
-        lensDirection: _parseCameraLensDirection(camera['lensFacing']),
-      );
+          name: camera['name'],
+          lensDirection: _parseCameraLensDirection(camera['lensFacing']),
+          screenSizeImage: _parseScreenSizeList(
+              camera['imageOutputSizesW'], camera['imageOutputSizesH']),
+          screenSizeVideo: _parseScreenSizeList(
+              camera['videoOutputSizesW'], camera['videoOutputSizesH']));
     }).toList();
   } on PlatformException catch (e) {
     throw CameraException(e.code, e.message);
   }
 }
 
+class CameraScreenSize {
+  CameraScreenSize(this.width, this.height);
+
+  final int width;
+  final int height;
+}
+
 class CameraDescription {
-  CameraDescription({this.name, this.lensDirection});
+  CameraDescription(
+      {this.name,
+      this.lensDirection,
+      this.screenSizeImage,
+      this.screenSizeVideo});
 
   final String name;
   final CameraLensDirection lensDirection;
+  final List<CameraScreenSize> screenSizeImage;
+  final List<CameraScreenSize> screenSizeVideo;
 
   @override
   bool operator ==(Object o) {
@@ -193,7 +218,8 @@ class CameraValue {
 ///
 /// To show the camera preview on the screen use a [CameraPreview] widget.
 class CameraController extends ValueNotifier<CameraValue> {
-  CameraController(this.description, this.resolutionPreset, {this.videoEncodingBitrate = 1000})
+  CameraController(this.description, this.resolutionPreset,
+      {this.videoEncodingBitrate = 1000})
       : super(const CameraValue.uninitialized());
 
   final CameraDescription description;

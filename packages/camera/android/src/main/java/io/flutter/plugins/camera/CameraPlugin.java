@@ -162,6 +162,8 @@ public class CameraPlugin implements MethodCallHandler {
             HashMap<String, Object> details = new HashMap<>();
             CameraCharacteristics characteristics =
                 cameraManager.getCameraCharacteristics(cameraName);
+            StreamConfigurationMap streamConfigurationMap =
+                characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
             details.put("name", cameraName);
             @SuppressWarnings("ConstantConditions")
             int lensFacing = characteristics.get(CameraCharacteristics.LENS_FACING);
@@ -176,6 +178,24 @@ public class CameraPlugin implements MethodCallHandler {
                 details.put("lensFacing", "external");
                 break;
             }
+            Size[] sizesImg = streamConfigurationMap.getOutputSizes(ImageFormat.JPEG);
+            List<Integer> widthsImg = new ArrayList<>();
+            List<Integer> heightsImg = new ArrayList<>();
+            for (Size s : sizesImg) {
+              widthsImg.add(s.getWidth());
+              heightsImg.add(s.getHeight());
+            }
+            details.put("imageOutputSizesW", widthsImg);
+            details.put("imageOutputSizesH", heightsImg);
+            Size[] sizesVid = streamConfigurationMap.getOutputSizes(SurfaceTexture.class);
+            List<Integer> widthsVid = new ArrayList<>();
+            List<Integer> heightsVid = new ArrayList<>();
+            for (Size s : sizesVid) {
+              widthsVid.add(s.getWidth());
+              heightsVid.add(s.getHeight());
+            }
+            details.put("videoOutputSizesW", widthsVid);
+            details.put("videoOutputSizesH", heightsVid);
             cameras.add(details);
           }
           result.success(cameras);
