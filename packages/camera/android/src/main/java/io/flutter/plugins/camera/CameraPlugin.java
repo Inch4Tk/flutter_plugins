@@ -208,11 +208,16 @@ public class CameraPlugin implements MethodCallHandler {
           String cameraName = call.argument("cameraName");
           String resolutionPreset = call.argument("resolutionPreset");
           String videoEncodingBitrateStr = call.argument("videoEncodingBitrate");
+          String forcedImageResolutionStr = call.argument("forcedImageResolution");
+          String forcedVideoResolutionStr = call.argument("forcedVideoResolution");
           int videoEncodingBitrate = Integer.parseInt(videoEncodingBitrateStr);
+          int forcedImageResolution = Integer.parseInt(forcedImageResolutionStr);
+          int forcedVideoResolution = Integer.parseInt(forcedVideoResolutionStr);
           if (camera != null) {
             camera.close();
           }
-          camera = new Camera(cameraName, resolutionPreset, videoEncodingBitrate, result);
+          camera = new Camera(cameraName, resolutionPreset, videoEncodingBitrate,
+                              forcedImageResolution, forcedVideoResolution, result);
           this.activity
               .getApplication()
               .registerActivityLifecycleCallbacks(this.activityLifecycleCallbacks);
@@ -312,11 +317,18 @@ public class CameraPlugin implements MethodCallHandler {
     private MediaRecorder mediaRecorder;
     private boolean recordingVideo;
     private int videoEncodingBitrate;
+    private int forcedImageResolution;
+    private int forcedVideoResolution;
 
-    Camera(final String cameraName, final String resolutionPreset, final int videoEncodingBitrate, @NonNull final Result result) {
+    Camera(final String cameraName, final String resolutionPreset,
+           final int videoEncodingBitrate,
+           final int forcedImageResolution, final int forcedVideoResolution,
+           @NonNull final Result result) {
 
       this.cameraName = cameraName;
       this.videoEncodingBitrate = videoEncodingBitrate;
+      this.forcedImageResolution = forcedImageResolution;
+      this.forcedVideoResolution = forcedVideoResolution;
       textureEntry = view.createSurfaceTexture();
 
       registerEventChannel();
@@ -432,6 +444,12 @@ public class CameraPlugin implements MethodCallHandler {
       int screenWidth = swapWH ? screenResolution.y : screenResolution.x;
       int screenHeight = swapWH ? screenResolution.x : screenResolution.y;
 
+      if (forcedVideoResolution != -1) {
+        previewSize = sizes[forcedVideoResolution];
+        videoSize = sizes[forcedVideoResolution];
+        return;
+      }
+
       List<Size> goodEnough = new ArrayList<>();
       for (Size s : sizes) {
         if (minPreviewSize.getWidth() < s.getWidth()
@@ -472,10 +490,15 @@ public class CameraPlugin implements MethodCallHandler {
 
     private void computeBestCaptureSize(StreamConfigurationMap streamConfigurationMap) {
       // For still image captures, we use the largest available size.
-      captureSize =
-          Collections.max(
-              Arrays.asList(streamConfigurationMap.getOutputSizes(ImageFormat.JPEG)),
-              new CompareSizesByArea());
+      if (forcedImageResolution != -1) {
+        captureSize = streamConfigurationMap.getOutputSizes(ImageFormat.JPEG)[forcedImageResolution];
+      }
+      else {
+        captureSize =
+        Collections.max(
+            Arrays.asList(streamConfigurationMap.getOutputSizes(ImageFormat.JPEG)),
+            new CompareSizesByArea());
+      }
     }
 
     private void prepareMediaRecorder(String outputFilePath) throws IOException {

@@ -44,8 +44,7 @@ CameraLensDirection _parseCameraLensDirection(String string) {
   throw ArgumentError('Unknown CameraLensDirection value');
 }
 
-List<CameraScreenSize> _parseScreenSizeList(
-    List widths, List heights) {
+List<CameraScreenSize> _parseScreenSizeList(List widths, List heights) {
   final List<CameraScreenSize> css = <CameraScreenSize>[];
   for (int i = 0; i < widths.length; ++i) {
     css.add(CameraScreenSize(widths[i], heights[i]));
@@ -219,12 +218,16 @@ class CameraValue {
 /// To show the camera preview on the screen use a [CameraPreview] widget.
 class CameraController extends ValueNotifier<CameraValue> {
   CameraController(this.description, this.resolutionPreset,
-      {this.videoEncodingBitrate = 1000})
+      {this.videoEncodingBitrate = 1000,
+      this.forcedImageResolution = -1,
+      this.forcedVideoResolution = -1})
       : super(const CameraValue.uninitialized());
 
   final CameraDescription description;
   final ResolutionPreset resolutionPreset;
   final int videoEncodingBitrate; // in kbits
+  final int forcedImageResolution; // Index into camera descriptions resolutions
+  final int forcedVideoResolution; // Index into camera descriptions resolutions
 
   int _textureId;
   bool _isDisposed = false;
@@ -247,6 +250,8 @@ class CameraController extends ValueNotifier<CameraValue> {
           'cameraName': description.name,
           'resolutionPreset': serializeResolutionPreset(resolutionPreset),
           'videoEncodingBitrate': videoEncodingBitrate.toString(),
+          'forcedImageResolution': forcedImageResolution.toString(),
+          'forcedVideoResolution': forcedVideoResolution.toString()
         },
       );
       _textureId = reply['textureId'];
