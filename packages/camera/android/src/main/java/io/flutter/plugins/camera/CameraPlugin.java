@@ -151,37 +151,37 @@ public class CameraPlugin implements MethodCallHandler {
   public List<Integer> getSupportedBitrates() {
     Set<Integer> bitrates = new LinkedHashSet<>();
     CamcorderProfile camProf;
-    if (camProf.hasProfile(CamcorderProfile.QUALITY_2160P)) {
+    if (CamcorderProfile.hasProfile(CamcorderProfile.QUALITY_2160P)) {
       camProf = CamcorderProfile.get(CamcorderProfile.QUALITY_2160P);
       bitrates.add(camProf.videoBitRate);
     }
-    if (camProf.hasProfile(CamcorderProfile.QUALITY_1080P)) {
-    camProf = CamcorderProfile.get(CamcorderProfile.QUALITY_1080P);
-    bitrates.add(camProf.videoBitRate);
+    if (CamcorderProfile.hasProfile(CamcorderProfile.QUALITY_1080P)) {
+      camProf = CamcorderProfile.get(CamcorderProfile.QUALITY_1080P);
+      bitrates.add(camProf.videoBitRate);
     }
-    if (camProf.hasProfile(CamcorderProfile.QUALITY_720P)) {
-    camProf = CamcorderProfile.get(CamcorderProfile.QUALITY_720P);
-    bitrates.add(camProf.videoBitRate);
+    if (CamcorderProfile.hasProfile(CamcorderProfile.QUALITY_720P)) {
+      camProf = CamcorderProfile.get(CamcorderProfile.QUALITY_720P);
+      bitrates.add(camProf.videoBitRate);
     }
-    if (camProf.hasProfile(CamcorderProfile.QUALITY_480P)) {
-    camProf = CamcorderProfile.get(CamcorderProfile.QUALITY_480P);
-    bitrates.add(camProf.videoBitRate);
+    if (CamcorderProfile.hasProfile(CamcorderProfile.QUALITY_480P)) {
+      camProf = CamcorderProfile.get(CamcorderProfile.QUALITY_480P);
+      bitrates.add(camProf.videoBitRate);
     }
-    if (camProf.hasProfile(CamcorderProfile.QUALITY_QVGA)) {
-    camProf = CamcorderProfile.get(CamcorderProfile.QUALITY_QVGA);
-    bitrates.add(camProf.videoBitRate);
+    if (CamcorderProfile.hasProfile(CamcorderProfile.QUALITY_QVGA)) {
+      camProf = CamcorderProfile.get(CamcorderProfile.QUALITY_QVGA);
+      bitrates.add(camProf.videoBitRate);
     }
-    if (camProf.hasProfile(CamcorderProfile.QUALITY_CIF)) {
-    camProf = CamcorderProfile.get(CamcorderProfile.QUALITY_CIF);
-    bitrates.add(camProf.videoBitRate);
+    if (CamcorderProfile.hasProfile(CamcorderProfile.QUALITY_CIF)) {
+      camProf = CamcorderProfile.get(CamcorderProfile.QUALITY_CIF);
+      bitrates.add(camProf.videoBitRate);
     }
-    if (camProf.hasProfile(CamcorderProfile.QUALITY_HIGH)) {
-    camProf = CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH);
-    bitrates.add(camProf.videoBitRate);
+    if (CamcorderProfile.hasProfile(CamcorderProfile.QUALITY_HIGH)) {
+      camProf = CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH);
+      bitrates.add(camProf.videoBitRate);
     }
-    if (camProf.hasProfile(CamcorderProfile.QUALITY_LOW)) {
-    camProf = CamcorderProfile.get(CamcorderProfile.QUALITY_LOW);
-    bitrates.add(camProf.videoBitRate);
+    if (CamcorderProfile.hasProfile(CamcorderProfile.QUALITY_LOW)) {
+      camProf = CamcorderProfile.get(CamcorderProfile.QUALITY_LOW);
+      bitrates.add(camProf.videoBitRate);
     }
     bitrates.add(8000 * 1000);
     bitrates.add(1024 * 1000);
