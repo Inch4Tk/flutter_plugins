@@ -66,7 +66,8 @@ Future<List<CameraDescription>> availableCameras() async {
           screenSizeImage: _parseScreenSizeList(
               camera['imageOutputSizesW'], camera['imageOutputSizesH']),
           screenSizeVideo: _parseScreenSizeList(
-              camera['videoOutputSizesW'], camera['videoOutputSizesH']));
+              camera['videoOutputSizesW'], camera['videoOutputSizesH']),
+          bitrates: List<int>.from(camera["bitrates"]));
     }).toList();
   } on PlatformException catch (e) {
     throw CameraException(e.code, e.message);
@@ -85,12 +86,14 @@ class CameraDescription {
       {this.name,
       this.lensDirection,
       this.screenSizeImage,
-      this.screenSizeVideo});
+      this.screenSizeVideo,
+      this.bitrates});
 
   final String name;
   final CameraLensDirection lensDirection;
   final List<CameraScreenSize> screenSizeImage;
   final List<CameraScreenSize> screenSizeVideo;
+  final List<int> bitrates;
 
   @override
   bool operator ==(Object o) {
@@ -218,14 +221,14 @@ class CameraValue {
 /// To show the camera preview on the screen use a [CameraPreview] widget.
 class CameraController extends ValueNotifier<CameraValue> {
   CameraController(this.description, this.resolutionPreset,
-      {this.videoEncodingBitrate = 1000,
+      {this.videoEncodingBitrateIdx = 0,
       this.forcedImageResolution = -1,
       this.forcedVideoResolution = -1})
       : super(const CameraValue.uninitialized());
 
   final CameraDescription description;
   final ResolutionPreset resolutionPreset;
-  final int videoEncodingBitrate; // in kbits
+  final int videoEncodingBitrateIdx;
   final int forcedImageResolution; // Index into camera descriptions resolutions
   final int forcedVideoResolution; // Index into camera descriptions resolutions
 
@@ -249,7 +252,7 @@ class CameraController extends ValueNotifier<CameraValue> {
         <String, dynamic>{
           'cameraName': description.name,
           'resolutionPreset': serializeResolutionPreset(resolutionPreset),
-          'videoEncodingBitrate': videoEncodingBitrate.toString(),
+          'videoEncodingBitrate': description.bitrates[videoEncodingBitrateIdx].toString(),
           'forcedImageResolution': forcedImageResolution.toString(),
           'forcedVideoResolution': forcedVideoResolution.toString()
         },

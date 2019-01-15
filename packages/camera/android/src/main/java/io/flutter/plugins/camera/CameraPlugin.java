@@ -22,6 +22,7 @@ import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
 import android.media.MediaRecorder;
+import android.media.CamcorderProfile;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -49,6 +50,8 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.LinkedHashSet;
 
 public class CameraPlugin implements MethodCallHandler {
 
@@ -145,6 +148,49 @@ public class CameraPlugin implements MethodCallHandler {
         new CameraPlugin(registrar, registrar.view(), registrar.activity()));
   }
 
+  public List<Integer> getSupportedBitrates() {
+    Set<Integer> bitrates = new LinkedHashSet<>();
+    CamcorderProfile camProf;
+    camProf = CamcorderProfile.get(CamcorderProfile.QUALITY_2160P);
+    bitrates.add(camProf.videoBitRate);
+    camProf = CamcorderProfile.get(CamcorderProfile.QUALITY_1080P);
+    bitrates.add(camProf.videoBitRate);
+    camProf = CamcorderProfile.get(CamcorderProfile.QUALITY_720P);
+    bitrates.add(camProf.videoBitRate);
+    camProf = CamcorderProfile.get(CamcorderProfile.QUALITY_480P);
+    bitrates.add(camProf.videoBitRate);
+    camProf = CamcorderProfile.get(CamcorderProfile.QUALITY_QVGA);
+    bitrates.add(camProf.videoBitRate);
+    camProf = CamcorderProfile.get(CamcorderProfile.QUALITY_CIF);
+    bitrates.add(camProf.videoBitRate);
+    camProf = CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH);
+    bitrates.add(camProf.videoBitRate);
+    camProf = CamcorderProfile.get(CamcorderProfile.QUALITY_LOW);
+    bitrates.add(camProf.videoBitRate);
+    // camProf = CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH_SPEED_1080P);
+    // bitrates.add(camProf.videoBitRate);
+    // camProf = CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH_SPEED_720P);
+    // bitrates.add(camProf.videoBitRate);
+    // camProf = CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH_SPEED_480P);
+    // bitrates.add(camProf.videoBitRate);
+    // camProf = CamcorderProfile.get(CamcorderProfile.QUALITY_TIME_LAPSE_2160P);
+    // bitrates.add(camProf.videoBitRate);
+    // camProf = CamcorderProfile.get(CamcorderProfile.QUALITY_TIME_LAPSE_1080P);
+    // bitrates.add(camProf.videoBitRate);
+    // camProf = CamcorderProfile.get(CamcorderProfile.QUALITY_TIME_LAPSE_720P);
+    // bitrates.add(camProf.videoBitRate);
+    // camProf = CamcorderProfile.get(CamcorderProfile.QUALITY_TIME_LAPSE_480P);
+    // bitrates.add(camProf.videoBitRate);
+    // camProf = CamcorderProfile.get(CamcorderProfile.QUALITY_TIME_LAPSE_QVGA);
+    // bitrates.add(camProf.videoBitRate);
+    // camProf = CamcorderProfile.get(CamcorderProfile.QUALITY_TIME_LAPSE_CIF);
+    // bitrates.add(camProf.videoBitRate);
+    // camProf = CamcorderProfile.get(CamcorderProfile.QUALITY_TIME_LAPSE_HIGH);
+    // bitrates.add(camProf.videoBitRate);
+    // camProf = CamcorderProfile.get(CamcorderProfile.QUALITY_TIME_LAPSE_LOW);
+    return new ArrayList<>(bitrates);
+  }
+
   @Override
   public void onMethodCall(MethodCall call, final Result result) {
     switch (call.method) {
@@ -196,6 +242,7 @@ public class CameraPlugin implements MethodCallHandler {
             }
             details.put("videoOutputSizesW", widthsVid);
             details.put("videoOutputSizesH", heightsVid);
+            details.put("bitrates", getSupportedBitrates());
             cameras.add(details);
           }
           result.success(cameras);
@@ -512,8 +559,8 @@ public class CameraPlugin implements MethodCallHandler {
       mediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
       mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
       mediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
-      mediaRecorder.setVideoEncodingBitRate(1024 * videoEncodingBitrate);
-      mediaRecorder.setVideoFrameRate(27);
+      mediaRecorder.setVideoEncodingBitRate(videoEncodingBitrate);
+      mediaRecorder.setVideoFrameRate(30);
       mediaRecorder.setVideoSize(videoSize.getWidth(), videoSize.getHeight());
       mediaRecorder.setOutputFile(outputFilePath);
       mediaRecorder.setOrientationHint(getMediaOrientation());
