@@ -167,6 +167,8 @@ public class CameraPlugin implements MethodCallHandler {
     bitrates.add(camProf.videoBitRate);
     camProf = CamcorderProfile.get(CamcorderProfile.QUALITY_LOW);
     bitrates.add(camProf.videoBitRate);
+    bitrates.add(8000 * 1000);
+    bitrates.add(1024 * 1000);
     // camProf = CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH_SPEED_1080P);
     // bitrates.add(camProf.videoBitRate);
     // camProf = CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH_SPEED_720P);
@@ -188,7 +190,9 @@ public class CameraPlugin implements MethodCallHandler {
     // camProf = CamcorderProfile.get(CamcorderProfile.QUALITY_TIME_LAPSE_HIGH);
     // bitrates.add(camProf.videoBitRate);
     // camProf = CamcorderProfile.get(CamcorderProfile.QUALITY_TIME_LAPSE_LOW);
-    return new ArrayList<>(bitrates);
+    List<Integer> rates = new ArrayList<>(bitrates);
+    Collections.sort(rates, Collections.reverseOrder());
+    return rates;
   }
 
   @Override
