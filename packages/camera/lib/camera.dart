@@ -10,8 +10,7 @@ import 'package:flutter/widgets.dart';
 
 part 'camera_image.dart';
 
-final MethodChannel _channel = const MethodChannel('plugins.flutter.io/camera')
-  ..invokeMethod('init');
+final MethodChannel _channel = const MethodChannel('plugins.flutter.io/camera');
 
 enum CameraLensDirection { front, back, external }
 
@@ -58,6 +57,9 @@ List<CameraScreenSize> _parseScreenSizeList(List widths, List heights) {
 Future<List<CameraDescription>> availableCameras() async {
   try {
     final List<dynamic> cameras =
+        // TODO(amirh): remove this on when the invokeMethod update makes it to stable Flutter.
+        // https://github.com/flutter/flutter/issues/26431
+        // ignore: strong_mode_implicit_dynamic_method
         await _channel.invokeMethod('availableCameras');
     return cameras.map((dynamic camera) {
       return CameraDescription(
@@ -247,6 +249,9 @@ class CameraController extends ValueNotifier<CameraValue> {
     }
     try {
       _creatingCompleter = Completer<void>();
+      // TODO(amirh): remove this on when the invokeMethod update makes it to stable Flutter.
+      // https://github.com/flutter/flutter/issues/26431
+      // ignore: strong_mode_implicit_dynamic_method
       final Map<dynamic, dynamic> reply = await _channel.invokeMethod(
         'initialize',
         <String, dynamic>{
@@ -319,6 +324,9 @@ class CameraController extends ValueNotifier<CameraValue> {
     }
     try {
       value = value.copyWith(isTakingPicture: true);
+      // TODO(amirh): remove this on when the invokeMethod update makes it to stable Flutter.
+      // https://github.com/flutter/flutter/issues/26431
+      // ignore: strong_mode_implicit_dynamic_method
       await _channel.invokeMethod(
         'takePicture',
         <String, dynamic>{'textureId': _textureId, 'path': path},
@@ -364,6 +372,9 @@ class CameraController extends ValueNotifier<CameraValue> {
     }
 
     try {
+      // TODO(amirh): remove this on when the invokeMethod update makes it to stable Flutter.
+      // https://github.com/flutter/flutter/issues/26431
+      // ignore: strong_mode_implicit_dynamic_method
       await _channel.invokeMethod('startImageStream');
       value = value.copyWith(isStreamingImages: true);
     } on PlatformException catch (e) {
@@ -405,6 +416,9 @@ class CameraController extends ValueNotifier<CameraValue> {
 
     try {
       value = value.copyWith(isStreamingImages: false);
+      // TODO(amirh): remove this on when the invokeMethod update makes it to stable Flutter.
+      // https://github.com/flutter/flutter/issues/26431
+      // ignore: strong_mode_implicit_dynamic_method
       await _channel.invokeMethod('stopImageStream');
     } on PlatformException catch (e) {
       throw CameraException(e.code, e.message);
@@ -445,6 +459,9 @@ class CameraController extends ValueNotifier<CameraValue> {
     }
 
     try {
+      // TODO(amirh): remove this on when the invokeMethod update makes it to stable Flutter.
+      // https://github.com/flutter/flutter/issues/26431
+      // ignore: strong_mode_implicit_dynamic_method
       await _channel.invokeMethod(
         'startVideoRecording',
         <String, dynamic>{'textureId': _textureId, 'filePath': filePath},
@@ -471,6 +488,9 @@ class CameraController extends ValueNotifier<CameraValue> {
     }
     try {
       value = value.copyWith(isRecordingVideo: false);
+      // TODO(amirh): remove this on when the invokeMethod update makes it to stable Flutter.
+      // https://github.com/flutter/flutter/issues/26431
+      // ignore: strong_mode_implicit_dynamic_method
       await _channel.invokeMethod(
         'stopVideoRecording',
         <String, dynamic>{'textureId': _textureId},
@@ -490,6 +510,9 @@ class CameraController extends ValueNotifier<CameraValue> {
     super.dispose();
     if (_creatingCompleter != null) {
       await _creatingCompleter.future;
+      // TODO(amirh): remove this on when the invokeMethod update makes it to stable Flutter.
+      // https://github.com/flutter/flutter/issues/26431
+      // ignore: strong_mode_implicit_dynamic_method
       await _channel.invokeMethod(
         'dispose',
         <String, dynamic>{'textureId': _textureId},
