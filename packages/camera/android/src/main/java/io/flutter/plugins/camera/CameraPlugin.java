@@ -245,6 +245,29 @@ public class CameraPlugin implements MethodCallHandler {
             details.put("videoOutputSizesW", widthsVid);
             details.put("videoOutputSizesH", heightsVid);
             details.put("bitrates", getSupportedBitrates());
+            float[] focalLenghts = characteristics.get(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS);
+            List<Float> focalLenghtsList = new ArrayList<>();
+            for (float f : focalLenghts) {
+              focalLenghtsList.add(f);
+            }
+            details.put("focalLengths", focalLenghtsList);
+            int[] distortionCorrectionModes = characteristics.get(CameraCharacteristics.DISTORTION_CORRECTION_AVAILABLE_MODES);
+            List<String> distortionCorrectionList = new ArrayList<>();
+            for (int distortionCorrection : distortionCorrectionModes) {
+              switch (distortionCorrection) {
+                case CameraMetadata.DISTORTION_CORRECTION_MODE_OFF:
+                  distortionCorrectionList.add("off");
+                  break;
+                case CameraMetadata.DISTORTION_CORRECTION_MODE_FAST:
+                  distortionCorrectionList.add("fast");
+                  break;
+                case CameraMetadata.DISTORTION_CORRECTION_MODE_HIGH_QUALITY:
+                  distortionCorrectionList.add("high");
+                  break;
+              }
+            }
+            details.put("distortionCorrection", distortionCorrectionList);
+
             cameras.add(details);
           }
           result.success(cameras);

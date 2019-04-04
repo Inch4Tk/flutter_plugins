@@ -14,7 +14,7 @@ part 'camera_image.dart';
 final MethodChannel _channel = const MethodChannel('plugins.flutter.io/camera');
 
 enum CameraLensDirection { front, back, external }
-
+enum CameraDistortionCorrection { off, fast, high }
 enum ResolutionPreset { low, medium, high }
 
 typedef onLatestImageAvailable = Function(CameraImage image);
@@ -44,6 +44,27 @@ CameraLensDirection _parseCameraLensDirection(String string) {
   throw ArgumentError('Unknown CameraLensDirection value');
 }
 
+CameraDistortionCorrection _parseCameraDistortionCorrection(String string) {
+  switch (string) {
+    case 'off':
+      return CameraDistortionCorrection.off;
+    case 'fast':
+      return CameraDistortionCorrection.fast;
+    case 'high':
+      return CameraDistortionCorrection.high;
+  }
+  throw ArgumentError('Unknown CameraDistortionCorrection value');
+}
+
+List<CameraDistortionCorrection> _parseCameraDistortionCorrectionList(
+    List<String> corrections) {
+  List<CameraDistortionCorrection> l;
+  for (String corr in corrections) {
+    l.add(_parseCameraDistortionCorrection(corr));
+  }
+  return l;
+}
+
 List<CameraScreenSize> _parseScreenSizeList(List widths, List heights) {
   final List<CameraScreenSize> css = <CameraScreenSize>[];
   for (int i = 0; i < widths.length; ++i) {
@@ -68,7 +89,10 @@ Future<List<CameraDescription>> availableCameras() async {
               camera['imageOutputSizesW'], camera['imageOutputSizesH']),
           screenSizeVideo: _parseScreenSizeList(
               camera['videoOutputSizesW'], camera['videoOutputSizesH']),
-          bitrates: List<int>.from(camera["bitrates"]));
+          bitrates: List<int>.from(camera['bitrates']),
+          focalLengths: List<double>.from(camera['focalLengths']),
+          distortionCorrection: _parseCameraDistortionCorrectionList(
+              camera['distortionCorrection']));
     }).toList();
   } on PlatformException catch (e) {
     throw CameraException(e.code, e.message);
@@ -89,13 +113,17 @@ class CameraDescription {
       this.sensorOrientation,
       this.screenSizeImage,
       this.screenSizeVideo,
-      this.bitrates});
+      this.bitrates,
+      this.focalLengths,
+      this.distortionCorrection});
 
   final String name;
   final CameraLensDirection lensDirection;
   final List<CameraScreenSize> screenSizeImage;
   final List<CameraScreenSize> screenSizeVideo;
+  final List<CameraDistortionCorrection> distortionCorrection;
   final List<int> bitrates;
+  final List<double> focalLengths;
 
   /// Clockwise angle through which the output image needs to be rotated to be upright on the device screen in its native orientation.
   ///
@@ -120,7 +148,7 @@ class CameraDescription {
 
   @override
   String toString() {
-    return '$runtimeType($name, $lensDirection, $sensorOrientation)';
+    return '$runtimeType($name, $lensDirection, $sensorOrientation, FocalLengths: $focalLengths)';
   }
 }
 
@@ -264,7 +292,8 @@ class CameraController extends ValueNotifier<CameraValue> {
         <String, dynamic>{
           'cameraName': description.name,
           'resolutionPreset': serializeResolutionPreset(resolutionPreset),
-          'videoEncodingBitrate': description.bitrates[videoEncodingBitrateIdx].toString(),
+          'videoEncodingBitrate':
+              description.bitrates[videoEncodingBitrateIdx].toString(),
           'forcedImageResolution': forcedImageResolution.toString(),
           'forcedVideoResolution': forcedVideoResolution.toString()
         },
