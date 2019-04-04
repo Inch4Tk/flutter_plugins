@@ -283,6 +283,8 @@ public class CameraPlugin implements MethodCallHandler {
           String forcedImageResolutionStr = call.argument("forcedImageResolution");
           String forcedVideoResolutionStr = call.argument("forcedVideoResolution");
           String forcedPreviewResolutionStr = call.argument("forcedPreviewResolution");
+          String enableAudioStr = call.argument("enableAudio");
+          boolean enableAudio = Boolean.parseBoolean(enableAudioStr);
           int videoEncodingBitrate = Integer.parseInt(videoEncodingBitrateStr);
           int forcedImageResolution = Integer.parseInt(forcedImageResolutionStr);
           int forcedVideoResolution = Integer.parseInt(forcedVideoResolutionStr);
@@ -291,7 +293,7 @@ public class CameraPlugin implements MethodCallHandler {
             camera.close();
           }
           CameraConfiguration cameraConfiguration = new CameraConfiguration(
-            resolutionPreset, videoEncodingBitrate,
+            enableAudio, resolutionPreset, videoEncodingBitrate,
             forcedImageResolution, forcedVideoResolution, forcedPreviewResolution
           );
           camera = new Camera(cameraName, cameraConfiguration, result);
@@ -384,12 +386,14 @@ public class CameraPlugin implements MethodCallHandler {
   }
 
   private class CameraConfiguration {
+    public final boolean enableAudio;
     public final String resolutionPreset;
     public final int videoEncodingBitrate;
     public final int forcedImageResolution;
     public final int forcedVideoResolution;
     public final int forcedPreviewResolution;
     CameraConfiguration(
+      enableAudio,
       resolutionPreset,
       videoEncodingBitrate,
       forcedImageResolution,
@@ -466,10 +470,12 @@ public class CameraPlugin implements MethodCallHandler {
                       "cameraPermission", "MediaRecorderCamera permission not granted", null);
                   return;
                 }
-                if (!hasAudioPermission()) {
-                  result.error(
-                      "cameraPermission", "MediaRecorderAudio permission not granted", null);
-                  return;
+                if (cameraConfiguration.enableAudio) {
+                  if (!hasAudioPermission()) {
+                    result.error(
+                        "cameraPermission", "MediaRecorderAudio permission not granted", null);
+                    return;
+                  }
                 }
                 open(result);
               }
@@ -480,10 +486,18 @@ public class CameraPlugin implements MethodCallHandler {
         } else {
           if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             requestingPermission = true;
+
+            String[] permissionsToRequest;
+            if (cameraConfiguration.enableAudio) {
+              permissionsToRequest = new String[] {Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO};
+            }
+            else {
+              permissionsToRequest = new String[] {Manifest.permission.CAMERA};
+            }
             registrar
                 .activity()
                 .requestPermissions(
-                    new String[] {Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO},
+                    permissionsToRequest,
                     CAMERA_REQUEST_ID);
           }
         }
@@ -518,6 +532,9 @@ public class CameraPlugin implements MethodCallHandler {
     }
 
     private boolean hasAudioPermission() {
+      if (!cameraConfiguration.enableAudio) {
+        return True;
+      }
       return Build.VERSION.SDK_INT < Build.VERSION_CODES.M
           || registrar.activity().checkSelfPermission(Manifest.permission.RECORD_AUDIO)
               == PackageManager.PERMISSION_GRANTED;
@@ -600,9 +617,11 @@ public class CameraPlugin implements MethodCallHandler {
         mediaRecorder.release();
       }
       mediaRecorder = new MediaRecorder();
-      // mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-      // mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
-      // mediaRecorder.setAudioSamplingRate(16000);
+      if (cameraConfiguration.enableAudio) {
+        mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+        mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
+        mediaRecorder.setAudioSamplingRate(16000);
+      }
       mediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
       mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
       mediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);

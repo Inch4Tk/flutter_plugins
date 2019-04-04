@@ -257,7 +257,8 @@ class CameraConfiguration {
       this.videoEncodingBitrateIdx = 0,
       this.forcedImageResolution = -1,
       this.forcedVideoResolution = -1,
-      this.forcedPreviewResolution = -1});
+      this.forcedPreviewResolution = -1,
+      this.enableAudio = true});
 
   final ResolutionPreset resolutionPreset;
   final int videoEncodingBitrateIdx;
@@ -267,6 +268,7 @@ class CameraConfiguration {
       forcedVideoResolution; // Index into camera descriptions video surface resolutions
   final int
       forcedPreviewResolution; // Index into camera descriptions video surface resolutions
+  final bool enableAudio;
 
   Map<String, dynamic> convertToInitialize(CameraDescription description) {
     return <String, dynamic>{
@@ -276,7 +278,8 @@ class CameraConfiguration {
           description.bitrates[videoEncodingBitrateIdx].toString(),
       'forcedImageResolution': forcedImageResolution.toString(),
       'forcedVideoResolution': forcedVideoResolution.toString(),
-      'forcedPreviewResolution': forcedVideoResolution.toString()
+      'forcedPreviewResolution': forcedVideoResolution.toString(),
+      'enableAudio': enableAudio.toString()
     };
   }
 }
@@ -312,9 +315,7 @@ class CameraController extends ValueNotifier<CameraValue> {
       _creatingCompleter = Completer<void>();
       final Map<String, dynamic> reply =
           await _channel.invokeMapMethod<String, dynamic>(
-        'initialize',
-        configuration.convertToInitialize(description)
-      );
+              'initialize', configuration.convertToInitialize(description));
       _textureId = reply['textureId'];
       value = value.copyWith(
         isInitialized: true,
