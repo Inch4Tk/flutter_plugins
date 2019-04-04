@@ -226,6 +226,7 @@ public class CameraPlugin implements MethodCallHandler {
                 details.put("lensFacing", "external");
                 break;
             }
+
             Size[] sizesImg = streamConfigurationMap.getOutputSizes(ImageFormat.JPEG);
             List<Integer> widthsImg = new ArrayList<>();
             List<Integer> heightsImg = new ArrayList<>();
@@ -235,6 +236,7 @@ public class CameraPlugin implements MethodCallHandler {
             }
             details.put("imageOutputSizesW", widthsImg);
             details.put("imageOutputSizesH", heightsImg);
+
             Size[] sizesVid = streamConfigurationMap.getOutputSizes(SurfaceTexture.class);
             List<Integer> widthsVid = new ArrayList<>();
             List<Integer> heightsVid = new ArrayList<>();
@@ -245,25 +247,29 @@ public class CameraPlugin implements MethodCallHandler {
             details.put("videoOutputSizesW", widthsVid);
             details.put("videoOutputSizesH", heightsVid);
             details.put("bitrates", getSupportedBitrates());
-            float[] focalLenghts = characteristics.get(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS);
-            List<Float> focalLenghtsList = new ArrayList<>();
-            for (float f : focalLenghts) {
-              focalLenghtsList.add(f);
+
+            float[] focalLengths = characteristics.get(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS);
+            List<Float> focalLengthsList = new ArrayList<>();
+            for (float f : focalLengths) {
+              focalLengthsList.add(f);
             }
-            details.put("focalLengths", focalLenghtsList);
+            details.put("focalLengths", focalLengthsList);
+
             int[] distortionCorrectionModes = characteristics.get(CameraCharacteristics.DISTORTION_CORRECTION_AVAILABLE_MODES);
             List<String> distortionCorrectionList = new ArrayList<>();
-            for (int distortionCorrection : distortionCorrectionModes) {
-              switch (distortionCorrection) {
-                case CameraMetadata.DISTORTION_CORRECTION_MODE_OFF:
-                  distortionCorrectionList.add("off");
-                  break;
-                case CameraMetadata.DISTORTION_CORRECTION_MODE_FAST:
-                  distortionCorrectionList.add("fast");
-                  break;
-                case CameraMetadata.DISTORTION_CORRECTION_MODE_HIGH_QUALITY:
-                  distortionCorrectionList.add("high");
-                  break;
+            if (distortionCorrectionModes != null) {
+              for (int distortionCorrection : distortionCorrectionModes) {
+                switch (distortionCorrection) {
+                  case CameraMetadata.DISTORTION_CORRECTION_MODE_OFF:
+                    distortionCorrectionList.add("off");
+                    break;
+                  case CameraMetadata.DISTORTION_CORRECTION_MODE_FAST:
+                    distortionCorrectionList.add("fast");
+                    break;
+                  case CameraMetadata.DISTORTION_CORRECTION_MODE_HIGH_QUALITY:
+                    distortionCorrectionList.add("high");
+                    break;
+                }
               }
             }
             details.put("distortionCorrection", distortionCorrectionList);
@@ -284,6 +290,7 @@ public class CameraPlugin implements MethodCallHandler {
           String forcedVideoResolutionStr = call.argument("forcedVideoResolution");
           String forcedPreviewResolutionStr = call.argument("forcedPreviewResolution");
           String enableAudioStr = call.argument("enableAudio");
+          String distortionCorrection = call.argument("distortionCorrection");
           boolean enableAudio = Boolean.parseBoolean(enableAudioStr);
           int videoEncodingBitrate = Integer.parseInt(videoEncodingBitrateStr);
           int forcedImageResolution = Integer.parseInt(forcedImageResolutionStr);
@@ -294,7 +301,8 @@ public class CameraPlugin implements MethodCallHandler {
           }
           CameraConfiguration cameraConfiguration = new CameraConfiguration(
             enableAudio, resolutionPreset, videoEncodingBitrate,
-            forcedImageResolution, forcedVideoResolution, forcedPreviewResolution
+            forcedImageResolution, forcedVideoResolution, forcedPreviewResolution,
+            distortionCorrection
           );
           camera = new Camera(cameraName, cameraConfiguration, result);
           this.activity
@@ -392,14 +400,24 @@ public class CameraPlugin implements MethodCallHandler {
     public final int forcedImageResolution;
     public final int forcedVideoResolution;
     public final int forcedPreviewResolution;
+    public final String distortionCorrection;
     CameraConfiguration(
-      enableAudio,
-      resolutionPreset,
-      videoEncodingBitrate,
-      forcedImageResolution,
-      forcedVideoResolution,
-      forcedPreviewResolution
-    )
+      boolean enableAudio,
+      String resolutionPreset,
+      int videoEncodingBitrate,
+      int forcedImageResolution,
+      int forcedVideoResolution,
+      int forcedPreviewResolution,
+      String distortionCorrection
+    ) {
+      this.enableAudio = enableAudio;
+      this.resolutionPreset = resolutionPreset;
+      this.videoEncodingBitrate = videoEncodingBitrate;
+      this.forcedImageResolution = forcedImageResolution;
+      this.forcedVideoResolution = forcedVideoResolution;
+      this.forcedPreviewResolution = forcedPreviewResolution;
+      this.distortionCorrection = distortionCorrection;
+    }
   }
 
   private class Camera {
@@ -419,12 +437,13 @@ public class CameraPlugin implements MethodCallHandler {
     private MediaRecorder mediaRecorder;
     private boolean recordingVideo;
     private CameraConfiguration cameraConfiguration;
+    private int distortionCorrectionMode;
 
     Camera(final String cameraName, final CameraConfiguration cameraConfiguration,
            @NonNull final Result result) {
 
       this.cameraName = cameraName;
-      this.cameraConfiguration = cameraConfiguration:
+      this.cameraConfiguration = cameraConfiguration;
       textureEntry = view.createSurfaceTexture();
 
       registerEventChannel();
@@ -525,6 +544,39 @@ public class CameraPlugin implements MethodCallHandler {
               });
     }
 
+    private void setDistortionCorrection(CameraCharacteristics characteristics) {
+      int distortionMode;
+      switch (cameraConfiguration.distortionCorrection) {
+        case "off":
+          distortionMode = CameraMetadata.DISTORTION_CORRECTION_MODE_OFF;
+          break;
+        case "fast":
+          distortionMode = CameraMetadata.DISTORTION_CORRECTION_MODE_FAST;
+          break;
+        case "high":
+          distortionMode = CameraMetadata.DISTORTION_CORRECTION_MODE_HIGH_QUALITY;
+          break;
+        default:
+          distortionMode = CameraMetadata.DISTORTION_CORRECTION_MODE_OFF;
+      }
+
+      // Check if the distortion correction is actually supported
+      int[] supportedDistortions = characteristics.get(
+        CameraCharacteristics.DISTORTION_CORRECTION_AVAILABLE_MODES);
+      boolean contains = false;
+      for (int i : supportedDistortions) {
+        if (i == distortionMode) {
+          contains = true;
+          break;
+        }
+      }
+      if (!contains) {
+        distortionMode = CameraMetadata.DISTORTION_CORRECTION_MODE_OFF;
+      }
+
+      distortionCorrectionMode = distortionMode;
+    }
+
     private boolean hasCameraPermission() {
       return Build.VERSION.SDK_INT < Build.VERSION_CODES.M
           || activity.checkSelfPermission(Manifest.permission.CAMERA)
@@ -533,7 +585,7 @@ public class CameraPlugin implements MethodCallHandler {
 
     private boolean hasAudioPermission() {
       if (!cameraConfiguration.enableAudio) {
-        return True;
+        return true;
       }
       return Build.VERSION.SDK_INT < Build.VERSION_CODES.M
           || registrar.activity().checkSelfPermission(Manifest.permission.RECORD_AUDIO)
@@ -763,6 +815,7 @@ public class CameraPlugin implements MethodCallHandler {
             cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
         captureBuilder.addTarget(pictureImageReader.getSurface());
         captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, getMediaOrientation());
+        captureBuilder.set(CaptureRequest.DISTORTION_CORRECTION_MODE, distortionCorrectionMode);
 
         cameraCaptureSession.capture(
             captureBuilder.build(),
@@ -837,6 +890,7 @@ public class CameraPlugin implements MethodCallHandler {
                   Camera.this.cameraCaptureSession = cameraCaptureSession;
                   captureRequestBuilder.set(
                       CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
+                  captureRequestBuilder.set(CaptureRequest.DISTORTION_CORRECTION_MODE, distortionCorrectionMode);
                   cameraCaptureSession.setRepeatingRequest(
                       captureRequestBuilder.build(), null, null);
                   mediaRecorder.start();
@@ -905,6 +959,7 @@ public class CameraPlugin implements MethodCallHandler {
                 cameraCaptureSession = session;
                 captureRequestBuilder.set(
                     CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
+                captureRequestBuilder.set(CaptureRequest.DISTORTION_CORRECTION_MODE, distortionCorrectionMode);
                 cameraCaptureSession.setRepeatingRequest(captureRequestBuilder.build(), null, null);
               } catch (CameraAccessException | IllegalStateException | IllegalArgumentException e) {
                 sendErrorEvent(e.getMessage());
@@ -950,6 +1005,7 @@ public class CameraPlugin implements MethodCallHandler {
                 cameraCaptureSession = session;
                 captureRequestBuilder.set(
                     CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
+                captureRequestBuilder.set(CaptureRequest.DISTORTION_CORRECTION_MODE, distortionCorrectionMode);
                 cameraCaptureSession.setRepeatingRequest(captureRequestBuilder.build(), null, null);
               } catch (CameraAccessException | IllegalStateException | IllegalArgumentException e) {
                 sendErrorEvent(e.getMessage());

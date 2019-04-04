@@ -44,6 +44,18 @@ CameraLensDirection _parseCameraLensDirection(String string) {
   throw ArgumentError('Unknown CameraLensDirection value');
 }
 
+String _serializeDistortionCorrection(CameraDistortionCorrection correction) {
+  switch (correction) {
+    case CameraDistortionCorrection.off:
+      return 'off';
+    case CameraDistortionCorrection.fast:
+      return 'fast';
+    case CameraDistortionCorrection.high:
+      return 'high';
+  }
+  throw ArgumentError('Unknown CameraDistortionCorrection value');
+}
+
 CameraDistortionCorrection _parseCameraDistortionCorrection(String string) {
   switch (string) {
     case 'off':
@@ -57,8 +69,8 @@ CameraDistortionCorrection _parseCameraDistortionCorrection(String string) {
 }
 
 List<CameraDistortionCorrection> _parseCameraDistortionCorrectionList(
-    List<String> corrections) {
-  List<CameraDistortionCorrection> l;
+    List corrections) {
+  final List<CameraDistortionCorrection> l = <CameraDistortionCorrection>[];
   for (String corr in corrections) {
     l.add(_parseCameraDistortionCorrection(corr));
   }
@@ -258,6 +270,7 @@ class CameraConfiguration {
       this.forcedImageResolution = -1,
       this.forcedVideoResolution = -1,
       this.forcedPreviewResolution = -1,
+      this.distortionCorrection = CameraDistortionCorrection.off,
       this.enableAudio = true});
 
   final ResolutionPreset resolutionPreset;
@@ -269,6 +282,7 @@ class CameraConfiguration {
   final int
       forcedPreviewResolution; // Index into camera descriptions video surface resolutions
   final bool enableAudio;
+  final CameraDistortionCorrection distortionCorrection;
 
   Map<String, dynamic> convertToInitialize(CameraDescription description) {
     return <String, dynamic>{
@@ -279,7 +293,9 @@ class CameraConfiguration {
       'forcedImageResolution': forcedImageResolution.toString(),
       'forcedVideoResolution': forcedVideoResolution.toString(),
       'forcedPreviewResolution': forcedVideoResolution.toString(),
-      'enableAudio': enableAudio.toString()
+      'enableAudio': enableAudio.toString(),
+      'distortionCorrection':
+          _serializeDistortionCorrection(distortionCorrection)
     };
   }
 }
