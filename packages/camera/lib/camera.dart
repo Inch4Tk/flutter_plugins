@@ -251,6 +251,35 @@ class CameraValue {
   }
 }
 
+class CameraConfiguration {
+  CameraConfiguration(
+      {this.resolutionPreset = ResolutionPreset.high,
+      this.videoEncodingBitrateIdx = 0,
+      this.forcedImageResolution = -1,
+      this.forcedVideoResolution = -1,
+      this.forcedPreviewResolution = -1});
+
+  final ResolutionPreset resolutionPreset;
+  final int videoEncodingBitrateIdx;
+  final int
+      forcedImageResolution; // Index into camera descriptions jpeg resolutions
+  final int
+      forcedVideoResolution; // Index into camera descriptions video surface resolutions
+  final int
+      forcedPreviewResolution; // Index into camera descriptions video surface resolutions
+
+  Map<String, dynamic> convertToInitialize(CameraDescription description) {
+    return <String, dynamic>{
+      'cameraName': description.name,
+      'resolutionPreset': serializeResolutionPreset(resolutionPreset),
+      'videoEncodingBitrate':
+          description.bitrates[videoEncodingBitrateIdx].toString(),
+      'forcedImageResolution': forcedImageResolution.toString(),
+      'forcedVideoResolution': forcedVideoResolution.toString()
+    };
+  }
+}
+
 /// Controls a device camera.
 ///
 /// Use [availableCameras] to get a list of available cameras.
@@ -259,17 +288,11 @@ class CameraValue {
 ///
 /// To show the camera preview on the screen use a [CameraPreview] widget.
 class CameraController extends ValueNotifier<CameraValue> {
-  CameraController(this.description, this.resolutionPreset,
-      {this.videoEncodingBitrateIdx = 0,
-      this.forcedImageResolution = -1,
-      this.forcedVideoResolution = -1})
+  CameraController(this.description, this.configuration)
       : super(const CameraValue.uninitialized());
 
   final CameraDescription description;
-  final ResolutionPreset resolutionPreset;
-  final int videoEncodingBitrateIdx;
-  final int forcedImageResolution; // Index into camera descriptions resolutions
-  final int forcedVideoResolution; // Index into camera descriptions resolutions
+  final CameraConfiguration configuration;
 
   int _textureId;
   bool _isDisposed = false;
@@ -289,14 +312,7 @@ class CameraController extends ValueNotifier<CameraValue> {
       final Map<String, dynamic> reply =
           await _channel.invokeMapMethod<String, dynamic>(
         'initialize',
-        <String, dynamic>{
-          'cameraName': description.name,
-          'resolutionPreset': serializeResolutionPreset(resolutionPreset),
-          'videoEncodingBitrate':
-              description.bitrates[videoEncodingBitrateIdx].toString(),
-          'forcedImageResolution': forcedImageResolution.toString(),
-          'forcedVideoResolution': forcedVideoResolution.toString()
-        },
+        configuration.convertToInitialize(description)
       );
       _textureId = reply['textureId'];
       value = value.copyWith(
