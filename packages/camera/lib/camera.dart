@@ -275,7 +275,8 @@ class CameraConfiguration {
       'videoEncodingBitrate':
           description.bitrates[videoEncodingBitrateIdx].toString(),
       'forcedImageResolution': forcedImageResolution.toString(),
-      'forcedVideoResolution': forcedVideoResolution.toString()
+      'forcedVideoResolution': forcedVideoResolution.toString(),
+      'forcedPreviewResolution': forcedVideoResolution.toString()
     };
   }
 }

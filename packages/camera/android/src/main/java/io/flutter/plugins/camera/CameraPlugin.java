@@ -282,14 +282,19 @@ public class CameraPlugin implements MethodCallHandler {
           String videoEncodingBitrateStr = call.argument("videoEncodingBitrate");
           String forcedImageResolutionStr = call.argument("forcedImageResolution");
           String forcedVideoResolutionStr = call.argument("forcedVideoResolution");
+          String forcedPreviewResolutionStr = call.argument("forcedPreviewResolution");
           int videoEncodingBitrate = Integer.parseInt(videoEncodingBitrateStr);
           int forcedImageResolution = Integer.parseInt(forcedImageResolutionStr);
           int forcedVideoResolution = Integer.parseInt(forcedVideoResolutionStr);
+          int forcedPreviewResolution = Integer.parseInt(forcedPreviewResolutionStr);
           if (camera != null) {
             camera.close();
           }
-          camera = new Camera(cameraName, resolutionPreset, videoEncodingBitrate,
-                              forcedImageResolution, forcedVideoResolution, result);
+          CameraConfiguration cameraConfiguration = new CameraConfiguration(
+            resolutionPreset, videoEncodingBitrate,
+            forcedImageResolution, forcedVideoResolution, forcedPreviewResolution
+          );
+          camera = new Camera(cameraName, cameraConfiguration, result);
           this.activity
               .getApplication()
               .registerActivityLifecycleCallbacks(this.activityLifecycleCallbacks);
@@ -378,6 +383,21 @@ public class CameraPlugin implements MethodCallHandler {
     }
   }
 
+  private class CameraConfiguration {
+    public final String resolutionPreset;
+    public final int videoEncodingBitrate;
+    public final int forcedImageResolution;
+    public final int forcedVideoResolution;
+    public final int forcedPreviewResolution;
+    CameraConfiguration(
+      resolutionPreset,
+      videoEncodingBitrate,
+      forcedImageResolution,
+      forcedVideoResolution,
+      forcedPreviewResolution
+    )
+  }
+
   private class Camera {
     private final FlutterView.SurfaceTextureEntry textureEntry;
     private CameraDevice cameraDevice;
@@ -394,26 +414,20 @@ public class CameraPlugin implements MethodCallHandler {
     private Size videoSize;
     private MediaRecorder mediaRecorder;
     private boolean recordingVideo;
-    private int videoEncodingBitrate;
-    private int forcedImageResolution;
-    private int forcedVideoResolution;
+    private CameraConfiguration cameraConfiguration;
 
-    Camera(final String cameraName, final String resolutionPreset,
-           final int videoEncodingBitrate,
-           final int forcedImageResolution, final int forcedVideoResolution,
+    Camera(final String cameraName, final CameraConfiguration cameraConfiguration,
            @NonNull final Result result) {
 
       this.cameraName = cameraName;
-      this.videoEncodingBitrate = videoEncodingBitrate;
-      this.forcedImageResolution = forcedImageResolution;
-      this.forcedVideoResolution = forcedVideoResolution;
+      this.cameraConfiguration = cameraConfiguration:
       textureEntry = view.createSurfaceTexture();
 
       registerEventChannel();
 
       try {
         int minHeight;
-        switch (resolutionPreset) {
+        switch (cameraConfiguration.resolutionPreset) {
           case "high":
             minHeight = 720;
             break;
@@ -424,7 +438,7 @@ public class CameraPlugin implements MethodCallHandler {
             minHeight = 240;
             break;
           default:
-            throw new IllegalArgumentException("Unknown preset: " + resolutionPreset);
+            throw new IllegalArgumentException("Unknown preset: " + cameraConfiguration.resolutionPreset);
         }
 
         CameraCharacteristics characteristics = cameraManager.getCameraCharacteristics(cameraName);
@@ -522,12 +536,6 @@ public class CameraPlugin implements MethodCallHandler {
       int screenWidth = swapWH ? screenResolution.y : screenResolution.x;
       int screenHeight = swapWH ? screenResolution.x : screenResolution.y;
 
-      if (forcedVideoResolution != -1) {
-        previewSize = sizes[forcedVideoResolution];
-        videoSize = sizes[forcedVideoResolution];
-        return;
-      }
-
       List<Size> goodEnough = new ArrayList<>();
       for (Size s : sizes) {
         if (minHeight <= s.getHeight()
@@ -563,12 +571,21 @@ public class CameraPlugin implements MethodCallHandler {
           }
         }
       }
+
+      // Override whatever we set before if necessary
+      if (cameraConfiguration.forcedPreviewResolution != -1) {
+        previewSize = sizes[cameraConfiguration.forcedPreviewResolution];
+      }
+      if (cameraConfiguration.forcedVideoResolution != -1) {
+        videoSize = sizes[cameraConfiguration.forcedVideoResolution];
+      }
     }
 
     private void computeBestCaptureSize(StreamConfigurationMap streamConfigurationMap) {
       // For still image captures, we use the largest available size.
-      if (forcedImageResolution != -1) {
-        captureSize = streamConfigurationMap.getOutputSizes(ImageFormat.JPEG)[forcedImageResolution];
+      if (cameraConfiguration.forcedImageResolution != -1) {
+        captureSize = streamConfigurationMap.getOutputSizes(ImageFormat.JPEG)
+          [cameraConfiguration.forcedImageResolution];
       }
       else {
         captureSize =
@@ -589,7 +606,7 @@ public class CameraPlugin implements MethodCallHandler {
       mediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
       mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
       mediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
-      mediaRecorder.setVideoEncodingBitRate(videoEncodingBitrate);
+      mediaRecorder.setVideoEncodingBitRate(cameraConfiguration.videoEncodingBitrate);
       mediaRecorder.setVideoFrameRate(30);
       mediaRecorder.setVideoSize(videoSize.getWidth(), videoSize.getHeight());
       mediaRecorder.setOutputFile(outputFilePath);
