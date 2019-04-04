@@ -1,8 +1,17 @@
+// Copyright 2018 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 package io.flutter.plugins.webviewflutter;
 
+import android.annotation.TargetApi;
 import android.content.Context;
+import android.os.Build;
+import android.os.Handler;
 import android.view.View;
+import android.webkit.WebStorage;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import io.flutter.plugin.common.BinaryMessenger;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
@@ -16,14 +25,20 @@ public class FlutterWebView implements PlatformView, MethodCallHandler {
   private static final String JS_CHANNEL_NAMES_FIELD = "javascriptChannelNames";
   private final WebView webView;
   private final MethodChannel methodChannel;
+  private final FlutterWebViewClient flutterWebViewClient;
+  private final Handler platformThreadHandler;
 
   @SuppressWarnings("unchecked")
   FlutterWebView(Context context, BinaryMessenger messenger, int id, Map<String, Object> params) {
     webView = new WebView(context);
+    platformThreadHandler = new Handler(context.getMainLooper());
+    // Allow local storage.
+    webView.getSettings().setDomStorageEnabled(true);
 
     methodChannel = new MethodChannel(messenger, "plugins.flutter.io/webview_" + id);
     methodChannel.setMethodCallHandler(this);
 
+    flutterWebViewClient = new FlutterWebViewClient(methodChannel);
     applySettings((Map<String, Object>) params.get("settings"));
 
     if (params.containsKey(JS_CHANNEL_NAMES_FIELD)) {
@@ -77,6 +92,9 @@ public class FlutterWebView implements PlatformView, MethodCallHandler {
       case "removeJavascriptChannels":
         removeJavaScriptChannels(methodCall, result);
         break;
+      case "clearCache":
+        clearCache(result);
+        break;
       default:
         result.notImplemented();
     }
@@ -125,6 +143,7 @@ public class FlutterWebView implements PlatformView, MethodCallHandler {
     result.success(null);
   }
 
+  @TargetApi(Build.VERSION_CODES.KITKAT)
   private void evaluateJavaScript(MethodCall methodCall, final Result result) {
     String jsString = (String) methodCall.arguments;
     if (jsString == null) {
@@ -156,11 +175,25 @@ public class FlutterWebView implements PlatformView, MethodCallHandler {
     result.success(null);
   }
 
+  private void clearCache(Result result) {
+    webView.clearCache(true);
+    WebStorage.getInstance().deleteAllData();
+    result.success(null);
+  }
+
   private void applySettings(Map<String, Object> settings) {
     for (String key : settings.keySet()) {
       switch (key) {
         case "jsMode":
           updateJsMode((Integer) settings.get(key));
+          break;
+        case "hasNavigationDelegate":
+          final boolean hasNavigationDelegate = (boolean) settings.get(key);
+
+          final WebViewClient webViewClient =
+              flutterWebViewClient.createWebViewClient(hasNavigationDelegate);
+
+          webView.setWebViewClient(webViewClient);
           break;
         default:
           throw new IllegalArgumentException("Unknown WebView setting: " + key);
@@ -184,10 +217,12 @@ public class FlutterWebView implements PlatformView, MethodCallHandler {
   private void registerJavaScriptChannelNames(List<String> channelNames) {
     for (String channelName : channelNames) {
       webView.addJavascriptInterface(
-          new JavaScriptChannel(methodChannel, channelName), channelName);
+          new JavaScriptChannel(methodChannel, channelName, platformThreadHandler), channelName);
     }
   }
 
   @Override
-  public void dispose() {}
+  public void dispose() {
+    methodChannel.setMethodCallHandler(null);
+  }
 }
