@@ -292,7 +292,7 @@ class CameraConfiguration {
           description.bitrates[videoEncodingBitrateIdx].toString(),
       'forcedImageResolution': forcedImageResolution.toString(),
       'forcedVideoResolution': forcedVideoResolution.toString(),
-      'forcedPreviewResolution': forcedVideoResolution.toString(),
+      'forcedPreviewResolution': forcedPreviewResolution.toString(),
       'enableAudio': enableAudio.toString(),
       'distortionCorrection':
           _serializeDistortionCorrection(distortionCorrection)
