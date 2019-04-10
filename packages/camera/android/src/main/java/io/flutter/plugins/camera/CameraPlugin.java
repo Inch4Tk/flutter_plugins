@@ -815,7 +815,9 @@ public class CameraPlugin implements MethodCallHandler {
             cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
         captureBuilder.addTarget(pictureImageReader.getSurface());
         captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, getMediaOrientation());
-        captureBuilder.set(CaptureRequest.DISTORTION_CORRECTION_MODE, distortionCorrectionMode);
+        if (distortionCorrectionMode != 0) {
+          captureBuilder.set(CaptureRequest.DISTORTION_CORRECTION_MODE, distortionCorrectionMode);
+        }
 
         cameraCaptureSession.capture(
             captureBuilder.build(),
@@ -890,7 +892,9 @@ public class CameraPlugin implements MethodCallHandler {
                   Camera.this.cameraCaptureSession = cameraCaptureSession;
                   captureRequestBuilder.set(
                       CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
-                  captureRequestBuilder.set(CaptureRequest.DISTORTION_CORRECTION_MODE, distortionCorrectionMode);
+                  if (distortionCorrectionMode != 0) {
+                    captureRequestBuilder.set(CaptureRequest.DISTORTION_CORRECTION_MODE, distortionCorrectionMode);
+                  }
                   cameraCaptureSession.setRepeatingRequest(
                       captureRequestBuilder.build(), null, null);
                   mediaRecorder.start();
@@ -959,7 +963,9 @@ public class CameraPlugin implements MethodCallHandler {
                 cameraCaptureSession = session;
                 captureRequestBuilder.set(
                     CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
-                captureRequestBuilder.set(CaptureRequest.DISTORTION_CORRECTION_MODE, distortionCorrectionMode);
+                if (distortionCorrectionMode != 0) {
+                  captureRequestBuilder.set(CaptureRequest.DISTORTION_CORRECTION_MODE, distortionCorrectionMode);
+                }
                 cameraCaptureSession.setRepeatingRequest(captureRequestBuilder.build(), null, null);
               } catch (CameraAccessException | IllegalStateException | IllegalArgumentException e) {
                 sendErrorEvent(e.getMessage());
@@ -1005,7 +1011,9 @@ public class CameraPlugin implements MethodCallHandler {
                 cameraCaptureSession = session;
                 captureRequestBuilder.set(
                     CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
-                captureRequestBuilder.set(CaptureRequest.DISTORTION_CORRECTION_MODE, distortionCorrectionMode);
+                if (distortionCorrectionMode != 0) {
+                  captureRequestBuilder.set(CaptureRequest.DISTORTION_CORRECTION_MODE, distortionCorrectionMode);
+                }
                 cameraCaptureSession.setRepeatingRequest(captureRequestBuilder.build(), null, null);
               } catch (CameraAccessException | IllegalStateException | IllegalArgumentException e) {
                 sendErrorEvent(e.getMessage());
